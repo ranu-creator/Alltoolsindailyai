@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>अपग्रेडेड ऑल-इन-वन टूलकिट</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --primary-blue: #007bff;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --info-cyan: #17a2b8;
+            --secondary-gray: #6c757d;
+            --text-color: #333;
+            --text-muted: #555;
+            --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            --border-radius: 20px;
+            --font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        body::before, body::after {
+            content: ''; position: fixed; border-radius: 50%; z-index: -1;
+            background: linear-gradient(135deg, #007bff, #00c6ff); opacity: 0.8;
+        }
+        body::before { top: -20%; right: -30%; width: 80vw; height: 120vh; transform: rotate(30deg); }
+        body::after { bottom: -30%; left: -20%; width: 60vw; height: 80vh; transform: rotate(-15deg); opacity: 0.6; }
+        .app-container { max-width: 950px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+        header { text-align: center; margin-bottom: 40px; padding: 20px; }
+        header h1 { font-size: 2.8rem; font-weight: 700; }
+        header p { font-size: 1.2rem; color: var(--text-muted); }
+        .search-bar { width: 100%; max-width: 400px; margin: 20px auto 0; padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 0, 0, 0.1); background-color: rgba(255, 255, 255, 0.9); font-size: 1rem; outline: none; box-shadow: var(--shadow); transition: all 0.3s ease; }
+        .search-bar:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
+        .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; }
+        .tool-card { background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: var(--border-radius); padding: 20px; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.2); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 140px; }
+        .tool-card:hover { transform: translateY(-8px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+        .tool-card .icon { font-size: 3rem; line-height: 1; margin-bottom: 15px; }
+        .tool-card h3 { font-size: 1rem; color: var(--text-color); font-weight: 600; }
+        @media (max-width: 600px) { .tool-grid { grid-template-columns: repeat(2, 1fr); gap: 15px;} header h1 { font-size: 2.2rem; } }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background-color: #ffffff; margin: auto; padding: 30px; border-radius: var(--border-radius); width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideIn 0.4s ease-out; max-height: 90vh; overflow-y: auto; }
+        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        .modal-header h2 { font-size: 1.5rem; color: var(--primary-blue); }
+        .close-btn { color: #aaa; font-size: 2rem; font-weight: bold; cursor: pointer; transition: color 0.3s; }
+        .close-btn:hover { color: #333; }
+        .tool-body .form-group { margin-bottom: 15px; }
+        .tool-body label { display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500; }
+        .tool-body input, .tool-body textarea, .tool-body select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background-color: #f7f7f7; color: var(--text-color); font-size: 1rem; }
+        .tool-body button { width: 100%; padding: 12px 15px; border-radius: 8px; border: none; background-color: var(--primary-blue); color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background-color 0.3s; margin-top: 10px; }
+        .tool-body button:hover { background-color: #0056b3; }
+        .tool-body .result, .tool-body #result { margin-top: 20px; padding: 15px; background-color: #f0f2f5; border-radius: 8px; text-align: center; font-size: 1.1rem; word-wrap: break-word; border: 1px solid #e0e0e0; }
+        .tool-body .btn-group { display: flex; gap: 10px; }
+        .tool-body .btn-group button { flex: 1; }
+        .uc-grid { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+        .calculator-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+        .calculator-grid button { padding: 20px 0; font-size: 1.2rem; border-radius: 8px; border: none; cursor: pointer; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .calculator-grid button.operator { background-color: var(--warning-yellow); }
+        .calculator-grid button.equals { background-color: var(--success-green); color: white; }
+        .calculator-grid button.clear { background-color: var(--danger-red); color: white; }
+        .calculator-grid button:active { transform: scale(0.95); }
+        #photo-canvas { max-width: 100%; border-radius: 8px; border: 1px solid #ddd; margin-top: 15px; }
+        .editor-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        #tts-output { margin-top: 15px; padding: 10px; border-radius: 8px; background-color: #f0f2f5; min-height: 50px; line-height: 1.8; }
+        #tts-output .highlight { background-color: var(--warning-yellow); color: #000; padding: 2px 4px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header><h1>अपग्रेडेड ऑल-इन-वन टूलकिट</h1><p>आपके सभी कामों के लिए एक बेहतर जगह</p><input type="text" id="searchBar" class="search-bar" placeholder="कोई टूल खोजें..."></header>
+        <main><div class="tool-grid" id="toolGrid"></div></main>
+    </div>
+
+    <div id="toolModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="modalTitle"></h2><span class="close-btn">&times;</span></div><div class="tool-body" id="modalBody"></div></div></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tools = [
+                { id: 'photo-editor', title: 'Photo Editor', icon: '🎨' }, { id: 'text-to-speech', title: 'Text to Speech', icon: '🗣️' }, { id: 'calculator', title: 'Calculator', icon: '🧮' }, { id: 'password-generator', title: 'Password Gen', icon: '🔐' }, { id: 'color-picker', title: 'Color Picker', icon: '🎨' }, { id: 'base64-converter', title: 'Base64 Tool', icon: '🔐' }, { id: 'random-number', title: 'Random Num', icon: '🔢' }, { id: 'loan-emi', title: 'Loan EMI', icon: '🏡' }, { id: 'audio-recorder', title: 'Audio Recorder', icon: '🎤' }, { id: 'image-compressor', title: 'Image Compressor', icon: '🖼️' }, { id: 'easy-notes', title: 'Easy Notes', icon: '📝' }, { id: 'qr-generator', title: 'QR Generator', icon: '📱' }, { id: 'world-time', title: 'World Time', icon: '🌎' }, { id: 'age-calculator', title: 'Age Calculator', icon: '🎂' }, { id: 'retirement-calculator', title: 'Retirement Calc', icon: '👴' }, { id: 'countdown-timer', title: 'Countdown', icon: '⏳' }, { id: 'word-counter', title: 'Word Counter', icon: '📖' }, { id: 'case-converter', title: 'Case Converter', icon: '🔄' }, { id: 'unit-converter', title: 'Unit Converter', icon: '📐' }, { id: 'discount-calculator', title: 'Discount Calc', icon: '💰' }, { id: 'tip-calculator', title: 'Tip Calculator', icon: '💵' }, { id: 'percentage-calculator', title: 'Percentage Calc', icon: '📊' }, { id: 'day-counter', title: 'Day Counter', icon: '🗓️' }, { id: 'temp-converter', title: 'Temp Converter', icon: '🌡️' }, { id: 'bmi-calculator', title: 'BMI Calculator', icon: '⚖️' }, { id: 'stopwatch', title: 'Stopwatch', icon: '⏱️' },
+            ];
+
+            const toolImplementations = {
+                'photo-editor': {
+                    title: 'Enhanced Photo Editor',
+                    html: `
+                        <div class="form-group"><label>Upload Image</label><input type="file" id="pe-uploader" accept="image/*"></div>
+                        <canvas id="photo-canvas"></canvas>
+                        <div class="editor-controls">
+                            <div class="form-group"><label>Brightness: <span id="pe-bright-val">100</span>%</label><input type="range" id="pe-brightness" min="0" max="200" value="100"></div>
+                            <div class="form-group"><label>Contrast: <span id="pe-contrast-val">100</span>%</label><input type="range" id="pe-contrast" min="0" max="200" value="100"></div>
+                            <div class="form-group"><label>Filter</label><select id="pe-filter"><option value="none">None</option><option value="grayscale(1)">Grayscale</option><option value="sepia(1)">Sepia</option><option value="invert(1)">Invert</option></select></div>
+                            <div class="form-group"><label>Border Width: <span id="pe-border-val">0</span>px</label><input type="range" id="pe-border-width" min="0" max="50" value="0"></div>
+                        </div>
+                         <div class="btn-group">
+                            <button id="pe-rotate">Rotate 90°</button>
+                            <button id="pe-reset" style="background-color:var(--secondary-gray);">Reset</button>
+                            <button id="pe-download" style="background-color:var(--success-green);">Download</button>
+                        </div>`,
+                    init: () => {
+                        const uploader = document.getElementById('pe-uploader'), canvas = document.getElementById('photo-canvas'), ctx = canvas.getContext('2d'), downloadBtn = document.getElementById('pe-download'), rotateBtn = document.getElementById('pe-rotate'), resetBtn = document.getElementById('pe-reset');
+                        const brightness = document.getElementById('pe-brightness'), contrast = document.getElementById('pe-contrast'), filterSelect = document.getElementById('pe-filter'), borderWidth = document.getElementById('pe-border-width');
+                        const brightVal = document.getElementById('pe-bright-val'), contrastVal = document.getElementById('pe-contrast-val'), borderVal = document.getElementById('pe-border-val');
+                        let originalImage = new Image(), rotation = 0;
+                        
+                        function resetControls() {
+                            brightness.value = 100; contrast.value = 100; filterSelect.value = 'none'; borderWidth.value = 0; rotation = 0;
+                            brightVal.textContent = '100'; contrastVal.textContent = '100'; borderVal.textContent = '0';
+                        }
+
+                        uploader.onchange = e => {
+                            if (!e.target.files[0]) return;
+                            const reader = new FileReader();
+                            reader.onload = event => { originalImage.src = event.target.result; };
+                            originalImage.onload = () => { resetControls(); drawImage(); };
+                            reader.readAsDataURL(e.target.files[0]);
+                        };
+                        
+                        function drawImage() {
+                            if (!originalImage.src) return;
+                            const w = originalImage.width, h = originalImage.height;
+                            canvas.width = (rotation % 180 === 0) ? w : h;
+                            canvas.height = (rotation % 180 === 0) ? h : w;
+                            
+                            ctx.filter = `brightness(${brightness.value}%) contrast(${contrast.value}%) ${filterSelect.value}`;
+                            
+                            ctx.save();
+                            ctx.translate(canvas.width / 2, canvas.height / 2);
+                            ctx.rotate(rotation * Math.PI / 180);
+                            ctx.drawImage(originalImage, -w / 2, -h / 2);
+                            ctx.restore();
+                            
+                            ctx.filter = 'none';
+                            if (borderWidth.value > 0) {
+                                ctx.strokeStyle = '#000';
+                                ctx.lineWidth = borderWidth.value;
+                                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                            }
+                        }
+
+                        [brightness, contrast, filterSelect, borderWidth].forEach(el => el.oninput = () => {
+                           if(el.id.includes('bright')) brightVal.textContent = el.value;
+                           if(el.id.includes('contrast')) contrastVal.textContent = el.value;
+                           if(el.id.includes('border')) borderVal.textContent = el.value;
+                           drawImage();
+                        });
+                        rotateBtn.onclick = () => { rotation = (rotation + 90) % 360; drawImage(); };
+                        resetBtn.onclick = () => { if(originalImage.src) { resetControls(); drawImage(); }};
+                        downloadBtn.onclick = () => { const link = document.createElement('a'); link.download = 'edited-image.png'; link.href = canvas.toDataURL(); link.click(); };
+                    }
+                },
+                'text-to-speech': {
+                    title: 'Text to Speech (with Highlighting)',
+                    html: `<div class="form-group"><label>Text to Speak</label><textarea id="tts-text" rows="4" placeholder="यहाँ कुछ लिखें..."></textarea></div>
+                           <div class="form-group"><label>Select Voice</label><select id="tts-voices"></select></div>
+                           <div id="tts-output"></div>
+                           <div class="btn-group"><button id="tts-play">▶️ Play</button><button id="tts-pause">⏸️ Pause</button><button id="tts-stop">⏹️ Stop</button></div>`,
+                    init: () => {
+                        const s = window.speechSynthesis, t = document.getElementById('tts-text'), v = document.getElementById('tts-voices'), pBtn = document.getElementById('tts-play'), paBtn = document.getElementById('tts-pause'), stBtn = document.getElementById('tts-stop'), output = document.getElementById('tts-output');
+                        let voices = [], utterance, wordSpans;
+                        function popVoices() { voices = s.getVoices(); v.innerHTML = ''; voices.forEach(vo => { const o = document.createElement('option'); o.textContent = `${vo.name} (${vo.lang})`; o.setAttribute('data-name', vo.name); v.appendChild(o); }); }
+                        popVoices(); if (s.onvoiceschanged !== undefined) s.onvoiceschanged = popVoices;
+                        
+                        function play() {
+                            if (s.paused && utterance) return s.resume();
+                            if (s.speaking) return;
+                            
+                            output.innerHTML = t.value.split(/\s+/).map(word => `<span>${word}</span>`).join(' ');
+                            wordSpans = output.querySelectorAll('span');
+
+                            utterance = new SpeechSynthesisUtterance(t.value);
+                            utterance.voice = voices.find(vo => vo.name === v.selectedOptions[0].getAttribute('data-name'));
+                            utterance.onboundary = e => {
+                                if (e.name === 'word') {
+                                    wordSpans.forEach(span => span.classList.remove('highlight'));
+                                    for (let i = 0; i < wordSpans.length; i++) {
+                                        if (t.value.substring(e.charIndex).startsWith(wordSpans[i].textContent)) {
+                                            wordSpans[i].classList.add('highlight');
+                                            break;
+                                        }
+                                    }
+                                }
+                            };
+                            utterance.onend = () => { output.innerHTML = ''; utterance = null; };
+                            s.speak(utterance);
+                        }
+                        pBtn.onclick = play;
+                        paBtn.onclick = () => s.pause();
+                        stBtn.onclick = () => { s.cancel(); output.innerHTML = ''; utterance = null; };
+                    }
+                },
+                'password-generator': {
+                    title: 'Password Generator',
+                    html: `<div class="form-group"><label>Length</label><input type="number" id="pg-len" value="16"></div>
+                           <div class="form-group"><label><input type="checkbox" id="pg-upper" checked> Uppercase (A-Z)</label><label><input type="checkbox" id="pg-lower" checked> Lowercase (a-z)</label><label><input type="checkbox" id="pg-num" checked> Numbers (0-9)</label><label><input type="checkbox" id="pg-sym"> Symbols (!@#)</label></div>
+                           <div class="result" id="pg-result" style="cursor:pointer; user-select:all;">Click Generate</div>
+                           <div class="btn-group"><button id="pg-gen">Generate</button><button id="pg-copy" style="background-color:var(--info-cyan)">Copy</button></div>`,
+                    init: () => {
+                        const resultEl = document.getElementById('pg-result'), copyBtn = document.getElementById('pg-copy');
+                        document.getElementById('pg-gen').onclick = () => {
+                            const len = document.getElementById('pg-len').value;
+                            const u = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", l = "abcdefghijklmnopqrstuvwxyz", n = "0123456789", s = "!@#$%^&*()_+=";
+                            let c = "";
+                            if(document.getElementById('pg-upper').checked) c += u;
+                            if(document.getElementById('pg-lower').checked) c += l;
+                            if(document.getElementById('pg-num').checked) c += n;
+                            if(document.getElementById('pg-sym').checked) c += s;
+                            if (c === "") { resultEl.textContent = "Select options!"; return; }
+                            let p = "";
+                            for (let i = 0; i < len; i++) p += c.charAt(Math.floor(Math.random() * c.length));
+                            resultEl.textContent = p;
+                        };
+                        copyBtn.onclick = () => {
+                            if(resultEl.textContent && resultEl.textContent !== "Click Generate" && resultEl.textContent !== "Select options!") {
+                                navigator.clipboard.writeText(resultEl.textContent);
+                                copyBtn.textContent = 'Copied!';
+                                setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+                            }
+                        };
+                    }
+                },
+                'calculator': { title: 'Calculator', html: `<input type="text" id="calc-display" style="width:100%;padding:10px;font-size:1.5rem;text-align:right;border-radius:8px;border:1px solid #ddd;" disabled><div class="calculator-grid"><button class="clear" style="grid-column: span 2;">Clear</button><button class="operator">/</button><button class="operator">*</button><button>7</button><button>8</button><button>9</button><button class="operator">-</button><button>4</button><button>5</button><button>6</button><button class="operator" style="grid-row: span 2;">+</button><button>1</button><button>2</button><button>3</button><button>0</button><button>.</button><button class="equals" style="grid-column: span 2;">=</button></div>`, init: () => { const d = document.getElementById('calc-display'); document.querySelector('.calculator-grid').addEventListener('click', e => { if (e.target.tagName !== 'BUTTON') return; const k = e.target.textContent; if (k === 'Clear') d.value = ''; else if (k === '=') try { d.value = eval(d.value.replace(/[^-()\d/*+.]/g, '')); } catch { d.value = 'Error'; } else d.value += k; }); } },
+                'color-picker': {
+                    title: 'Color Picker',
+                    html: `<div class="form-group" style="display:flex; flex-direction:column; align-items:center;">
+                           <label>Select a Color</label>
+                           <input type="color" id="cp-input" value="#007bff" style="width:100px; height:100px; border:none; border-radius:15px; padding:0; cursor:pointer;">
+                           </div>
+                           <div id="result"></div>`,
+                    init: () => {
+                        const picker = document.getElementById('cp-input');
+                        const result = document.getElementById('result');
+                        function updateColor() {
+                            const hex = picker.value;
+                            const r = parseInt(hex.slice(1, 3), 16);
+                            const g = parseInt(hex.slice(3, 5), 16);
+                            const b = parseInt(hex.slice(5, 7), 16);
+                            result.innerHTML = `<strong>HEX:</strong> ${hex}<br>
+                                                <strong>RGB:</strong> rgb(${r}, ${g}, ${b})`;
+                        }
+                        picker.oninput = updateColor;
+                        updateColor();
+                    }
+                },
+                'random-number': {
+                    title: 'Random Number Generator',
+                    html: `<div class="form-group"><label>Minimum Value</label><input type="number" id="rn-min" value="1"></div>
+                           <div class="form-group"><label>Maximum Value</label><input type="number" id="rn-max" value="100"></div>
+                           <button id="rn-gen">Generate</button>
+                           <div id="result" style="font-size:2rem; font-weight:bold;"></div>`,
+                    init: () => {
+                        document.getElementById('rn-gen').onclick = () => {
+                            const min = parseInt(document.getElementById('rn-min').value);
+                            const max = parseInt(document.getElementById('rn-max').value);
+                            if (min >= max) {
+                                document.getElementById('result').textContent = 'Error';
+                                return;
+                            }
+                            const rand = Math.floor(Math.random() * (max - min + 1)) + min;
+                            document.getElementById('result').textContent = rand;
+                        }
+                    }
+                },
+                'base64-converter': {
+                    title: 'Base64 Encoder / Decoder',
+                    html: `<div class="form-group"><label>Input</label><textarea id="b64-input" rows="5"></textarea></div>
+                           <div class="btn-group">
+                           <button id="b64-encode">Encode to Base64</button>
+                           <button id="b64-decode" style="background-color:var(--info-cyan);">Decode from Base64</button>
+                           </div>
+                           <div class="form-group" style="margin-top:15px;"><label>Output</label><textarea id="b64-output" rows="5" readonly></textarea></div>`,
+                    init: () => {
+                        const input = document.getElementById('b64-input');
+                        const output = document.getElementById('b64-output');
+                        document.getElementById('b64-encode').onclick = () => {
+                            try { output.value = btoa(input.value); } catch(e) { output.value = 'Invalid input for encoding.'; }
+                        };
+                        document.getElementById('b64-decode').onclick = () => {
+                            try { output.value = atob(input.value); } catch(e) { output.value = 'Invalid Base64 string.'; }
+                        };
+                    }
+                },
+                'loan-emi': { title: 'Loan EMI Calculator', html: `<div class="form-group"><label>Loan Amount (₹)</label><input type="number" id="principal"></div><div class="form-group"><label>Interest Rate (% p.a.)</label><input type="number" id="interest"></div><div class="form-group"><label>Tenure (Years)</label><input type="number" id="tenure"></div><button id="calculate-emi">Calculate</button><div id="result"></div>`, init: () => {document.getElementById('calculate-emi').onclick=()=>{const P=parseFloat(document.getElementById('principal').value),r=parseFloat(document.getElementById('interest').value),t=parseFloat(document.getElementById('tenure').value);if(P>0&&r>0&&t>0){const R=(r/12)/100,N=t*12;const E=P*R*Math.pow(1+R,N)/(Math.pow(1+R,N)-1);document.getElementById('result').innerHTML=`<strong>Monthly EMI:</strong> ₹${E.toFixed(2)}`;}}}},
+                'audio-recorder': { title: 'Audio Recorder', html: `<div class="btn-group"><button id="ar-record">Start Recording</button><button id="ar-stop" disabled>Stop</button></div><div id="result"></div>`, init: () => {let m,c=[];const rec=document.getElementById('ar-record'),stp=document.getElementById('ar-stop'),res=document.getElementById('result');rec.onclick=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({audio:true});m=new MediaRecorder(s);m.ondataavailable=e=>c.push(e.data);m.onstop=()=>{const b=new Blob(c,{type:'audio/webm'});c=[];const u=URL.createObjectURL(b);res.innerHTML=`<audio controls src="${u}"></audio><a href="${u}" download="recording.webm"><button style="width:auto;">Download</button></a>`;};m.start();rec.disabled=true;stp.disabled=false;rec.textContent="Recording...";}catch(e){res.textContent='Permission denied.';}};stp.onclick=()=>{m.stop();rec.disabled=false;stp.disabled=true;rec.textContent="Start Recording";};}},
+                'image-compressor': { title: 'Image Compressor', html: `<div class="form-group"><label>Select Image</label><input type="file" id="ic-file" accept="image/*"></div><div class="form-group"><label>Quality</label><input type="range" id="ic-quality" min="0.1" max="1" step="0.1" value="0.7"></div><div id="result"></div>`, init: () => {const f=document.getElementById('ic-file'),q=document.getElementById('ic-quality'),r=document.getElementById('result');f.onchange=e=>{if(!e.target.files[0])return;const reader=new FileReader();reader.onload=ev=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;c.getContext('2d').drawImage(i,0,0);const d=c.toDataURL(e.target.files[0].type,parseFloat(q.value));r.innerHTML=`<img src="${d}" style="max-width:100%"><a href="${d}" download="compressed.jpg"><button>Download</button></a>`;};i.src=ev.target.result;};reader.readAsDataURL(e.target.files[0]);};}},
+                'easy-notes': { title: 'Easy Notes', html: `<div class="form-group"><label>Your Notes (auto-saved)</label><textarea id="en-notes" rows="10"></textarea></div>`, init: () => {const n=document.getElementById('en-notes');n.value=localStorage.getItem('easy-notes')||'';n.onkeyup=()=>localStorage.setItem('easy-notes',n.value);}},
+                'qr-generator': { title: 'QR Generator', html: `<div class="form-group"><label>Text or URL</label><textarea id="qr-text" rows="4"></textarea></div><button id="qr-generate">Generate</button><div class="result" style="background:white;padding:10px;min-height:150px; display:flex; justify-content:center; align-items:center;"></div>`, init: () => {document.getElementById('qr-generate').onclick=()=>{const t=document.getElementById('qr-text').value,e=document.querySelector('.result');e.innerHTML='';if(t)new QRCode(e,{text:t,width:150,height:150});};}},
+                'world-time': { title: 'World Time', html: `<div class="form-group"><label>Select City</label><select id="wt-city"><option value="Asia/Kolkata">Kolkata</option><option value="America/New_York">New York</option><option value="Europe/London">London</option><option value="Asia/Tokyo">Tokyo</option><option value="Australia/Sydney">Sydney</option></select></div><div id="result" style="font-size:1.5rem;"></div>`, init: () => {const s=document.getElementById('wt-city'),r=document.getElementById('result');function show(){r.textContent=new Date().toLocaleTimeString('en-US',{timeZone:s.value});}s.onchange=show;show();setInterval(show,1000);}},
+                'age-calculator': { title: 'Age Calculator', html: `<div class="form-group"><label>Your birthdate</label><input type="date" id="ac-birthdate"></div><button id="ac-calculate">Calculate</button><div id="result"></div>`, init: () => {document.getElementById('ac-calculate').onclick=()=>{const b=new Date(document.getElementById('ac-birthdate').value);if(isNaN(b)){document.getElementById('result').textContent='Invalid date.';return;}const t=new Date();let y=t.getFullYear()-b.getFullYear(),m=t.getMonth()-b.getMonth(),d=t.getDate()-b.getDate();if(d<0){m--;d+=new Date(t.getFullYear(),t.getMonth(),0).getDate();}if(m<0){y--;m+=12;}document.getElementById('result').innerHTML=`You are <strong>${y}</strong>y <strong>${m}</strong>m <strong>${d}</strong>d old.`;};}},
+                'retirement-calculator': { title: 'Retirement Calculator', html: `<div class="form-group"><label>Current Age</label><input type="number" id="rc-current-age" value="30"></div><div class="form-group"><label>Retirement Age</label><input type="number" id="rc-retire-age" value="60"></div><div class="form-group"><label>Monthly Investment (₹)</label><input type="number" id="rc-monthly-inv" value="10000"></div><div class="form-group"><label>Return Rate (% p.a.)</label><input type="number" id="rc-return-rate" value="12"></div><button id="rc-calculate">Calculate</button><div id="result"></div>`, init: () => {document.getElementById('rc-calculate').onclick=()=>{const ca=parseInt(document.getElementById('rc-current-age').value),ra=parseInt(document.getElementById('rc-retire-age').value),p=parseInt(document.getElementById('rc-monthly-inv').value),i=parseFloat(document.getElementById('rc-return-rate').value)/100/12,n=(ra-ca)*12;const c=p*((Math.pow(1+i,n)-1)/i)*(1+i);document.getElementById('result').innerHTML=`Estimated Corpus: <br><strong>₹${c.toLocaleString('en-IN',{maximumFractionDigits:0})}</strong>`;};}},
+                'countdown-timer': { title: 'Countdown Timer', html: `<div style="display:flex;gap:5px;"><input type="number" id="cd-h" placeholder="HH" value="0"><input type="number" id="cd-m" placeholder="MM" value="5"><input type="number" id="cd-s" placeholder="SS" value="0"></div><div class="btn-group" style="margin-top:10px;"><button id="cd-start">Start</button><button id="cd-reset" style="background-color:var(--secondary-gray)">Reset</button></div><div id="result" style="font-size:2rem;margin-top:15px;">00:05:00</div>`, init: () => {let i,ts;const h=document.getElementById('cd-h'),m=document.getElementById('cd-m'),s=document.getElementById('cd-s'),r=document.getElementById('result'),st=document.getElementById('cd-start'),rs=document.getElementById('cd-reset');function u(){ts--;if(ts<0){clearInterval(i);r.textContent="Time's Up!";return;}const hh=Math.floor(ts/3600),mm=Math.floor((ts%3600)/60),ss=ts%60;r.textContent=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;};st.onclick=()=>{clearInterval(i);ts=(parseInt(h.value||0)*3600)+(parseInt(m.value||0)*60)+parseInt(s.value||0);i=setInterval(u,1000);};rs.onclick=()=>{clearInterval(i);r.textContent="00:05:00";h.value=0;m.value=5;s.value=0;};}},
+                'word-counter': { title: 'Word Counter', html: `<div class="form-group"><textarea id="wc-text" rows="8"></textarea></div><div id="result">Words: 0 | Chars: 0</div>`, init: () => {document.getElementById('wc-text').oninput=e=>{const t=e.target.value,w=t.trim()===''?0:t.trim().split(/\s+/).length;document.getElementById('result').innerHTML=`Words: <strong>${w}</strong> | Chars: <strong>${t.length}</strong>`;};}},
+                'case-converter': { title: 'Case Converter', html: `<div class="form-group"><textarea id="cc-text" rows="6"></textarea></div><div class="btn-group"><button id="cc-upper">UPPERCASE</button><button id="cc-lower">lowercase</button><button id="cc-cap">Capitalize Case</button></div>`, init: () => {const t=document.getElementById('cc-text');document.getElementById('cc-upper').onclick=()=>{t.value=t.value.toUpperCase();};document.getElementById('cc-lower').onclick=()=>{t.value=t.value.toLowerCase();};document.getElementById('cc-cap').onclick=()=>{t.value=t.value.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');};}},
+                'unit-converter': { title: 'Unit Converter', html: `<div class="form-group"><label>Category</label><select id="uc-cat"><option value="length">Length</option><option value="weight">Weight</option><option value="volume">Volume</option></select></div><div class="uc-grid"><input type="number" id="uc-input" value="1"><select id="uc-from"></select></div><div style="text-align:center;font-size:1.5rem;">=</div><div class="uc-grid"><input type="number" id="uc-output" disabled><select id="uc-to"></select></div>`, init: () => { const u={length:{m:1,km:1000,ft:0.3048},weight:{kg:1,g:0.001,lb:0.453592},volume:{l:1,ml:0.001,gal:3.78541}};const c=document.getElementById('uc-cat'),fS=document.getElementById('uc-from'),tS=document.getElementById('uc-to'),i=document.getElementById('uc-input'),o=document.getElementById('uc-output');function p(){const sC=u[c.value];fS.innerHTML=tS.innerHTML='';for(const unit in sC){fS.innerHTML+=`<option value="${unit}">${unit}</option>`;tS.innerHTML+=`<option value="${unit}">${unit}</option>`;}}function conv(){const v=parseFloat(i.value);if(isNaN(v))return;o.value=((v*u[c.value][fS.value])/u[c.value][tS.value]).toFixed(4);}c.onchange=()=>{p();conv();};i.oninput=fS.onchange=tS.onchange=conv;p();conv();}},
+                'discount-calculator': { title: 'Discount Calculator', html: `<div class="form-group"><label>Original Price (₹)</label><input type="number" id="dc-price"></div><div class="form-group"><label>Discount (%)</label><input type="number" id="dc-discount"></div><button id="dc-calc">Calculate</button><div id="result"></div>`, init: () => { document.getElementById('dc-calc').onclick = () => { const p = parseFloat(document.getElementById('dc-price').value), d = parseFloat(document.getElementById('dc-discount').value); if (p > 0 && d >= 0) { const s = p * (d / 100); const f = p - s; document.getElementById('result').innerHTML = `You save: <strong>₹${s.toFixed(2)}</strong><br>Final Price: <strong>₹${f.toFixed(2)}</strong>`; } }; } },
+                'tip-calculator': { title: 'Tip Calculator', html: `<div class="form-group"><label>Bill Amount (₹)</label><input type="number" id="tc-bill"></div><div class="form-group"><label>Tip (%)</label><input type="number" id="tc-tip" value="10"></div><div class="form-group"><label>People</label><input type="number" id="tc-people" value="1"></div><button id="tc-calc">Calculate</button><div id="result"></div>`, init: () => { document.getElementById('tc-calc').onclick = () => { const b = parseFloat(document.getElementById('tc-bill').value), t = parseFloat(document.getElementById('tc-tip').value), p = parseInt(document.getElementById('tc-people').value); if (b > 0 && p > 0) { const ta = b * (t / 100); const total = b + ta; document.getElementById('result').innerHTML = `Tip: <strong>₹${ta.toFixed(2)}</strong><br>Total: <strong>₹${total.toFixed(2)}</strong><br>${p > 1 ? `Per Person: <strong>₹${(total / p).toFixed(2)}</strong>` : ''}`; } }; } },
+                'percentage-calculator': { title: 'Percentage Calculator', html: `<div class="uc-grid"><input type="number" id="pc-percent" placeholder="%"><label>of</label><input type="number" id="pc-value" placeholder="value"></div><button id="pc-calc">Calculate</button><div id="result"></div>`, init: () => { document.getElementById('pc-calc').onclick = () => { const p = parseFloat(document.getElementById('pc-percent').value), v = parseFloat(document.getElementById('pc-value').value); if (!isNaN(p) && !isNaN(v)) document.getElementById('result').innerHTML = `Result: <strong>${(v * (p/100)).toFixed(2)}</strong>`; }; } },
+                'day-counter': { title: 'Day Counter', html: `<div class="form-group"><label>Start Date</label><input type="date" id="dc-start"></div><div class="form-group"><label>End Date</label><input type="date" id="dc-end"></div><button id="dc-calc">Count</button><div id="result"></div>`, init: () => {document.getElementById('dc-calc').onclick=()=>{const s=new Date(document.getElementById('dc-start').value),e=new Date(document.getElementById('dc-end').value);if(s&&e&&s<e){document.getElementById('result').textContent=`${Math.ceil((e-s)/864e5)} days between.`;}else{document.getElementById('result').textContent='Invalid date range.'}}}},
+                'temp-converter': { title: 'Temperature Converter', html: `<div class="uc-grid"><input type="number" id="tc-c"><label>°C</label></div><div style="text-align:center;font-size:1.5rem;">=</div><div class="uc-grid"><input type="number" id="tc-f"><label>°F</label></div>`, init: () => {const c=document.getElementById('tc-c'),f=document.getElementById('tc-f');c.oninput=()=>{if(c.value === '') {f.value = ''; return;} f.value=(parseFloat(c.value)*9/5+32).toFixed(2);};f.oninput=()=>{if(f.value === '') {c.value = ''; return;} c.value=((parseFloat(f.value)-32)*5/9).toFixed(2);};}},
+                'bmi-calculator': { title: 'BMI Calculator', html: `<div class="form-group"><label>Height (cm)</label><input type="number" id="bmi-h"></div><div class="form-group"><label>Weight (kg)</label><input type="number" id="bmi-w"></div><button id="bmi-calc">Calculate</button><div id="result"></div>`, init: () => {document.getElementById('bmi-calc').onclick=()=>{const h=parseFloat(document.getElementById('bmi-h').value)/100,w=parseFloat(document.getElementById('bmi-w').value);if(h>0&&w>0){const bmi=(w/(h*h)).toFixed(1);let cat='Normal';if(bmi<18.5)cat='Underweight';else if(bmi>=25)cat='Overweight';document.getElementById('result').innerHTML=`Your BMI is <strong>${bmi}</strong> (${cat}).`}}}},
+                'stopwatch': { title: 'Stopwatch', html: `<div id="result" style="font-size:2.5rem;text-align:center;">00:00:00.000</div><div class="btn-group"><button id="sw-start">Start</button><button id="sw-stop">Stop</button><button id="sw-reset">Reset</button></div>`, init: () => {let sT,eT=0,tI;const d=document.getElementById('result'),st=document.getElementById('sw-start'),sp=document.getElementById('sw-stop'),rs=document.getElementById('sw-reset');function fT(ms){const m=String(Math.floor(ms/60000)).padStart(2,'0'),s=String(Math.floor((ms%60000)/1000)).padStart(2,'0'),mls=String(ms%1000).padStart(3,'0');return `${m}:${s}.${mls}`;}st.onclick=()=>{if(!tI){sT=Date.now()-eT;tI=setInterval(()=>{eT=Date.now()-sT;d.textContent=fT(eT);},10);}};sp.onclick=()=>{clearInterval(tI);tI=null;};rs.onclick=()=>{clearInterval(tI);tI=null;eT=0;d.textContent=fT(0);};}},
+            };
+
+            const grid = document.getElementById('toolGrid');
+            const searchBar = document.getElementById('searchBar');
+            const modal = document.getElementById('toolModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const closeBtn = document.querySelector('.close-btn');
+
+            const renderTools = (filter = '') => {
+                grid.innerHTML = '';
+                const filteredTools = tools.filter(tool => tool.title.toLowerCase().includes(filter.toLowerCase()));
+                filteredTools.forEach(tool => {
+                    const card = document.createElement('div');
+                    card.className = 'tool-card';
+                    card.dataset.toolId = tool.id;
+                    card.innerHTML = `<div class="icon">${tool.icon}</div><h3>${tool.title}</h3>`;
+                    card.addEventListener('click', () => openTool(tool.id));
+                    grid.appendChild(card);
+                });
+            };
+
+            const openTool = (toolId) => {
+                const implementation = toolImplementations[toolId];
+                if (!implementation) return;
+                modalTitle.textContent = implementation.title;
+                modalBody.innerHTML = implementation.html;
+                
+                if (toolId === 'qr-generator' && typeof QRCode === 'undefined') {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js';
+                    document.body.appendChild(script);
+                    script.onload = () => implementation.init();
+                } else if (implementation.init) {
+                    implementation.init();
+                }
+                modal.classList.add('active');
+            };
+
+            const closeModal = () => modal.classList.remove('active');
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
+            searchBar.addEventListener('input', (e) => renderTools(e.target.value));
+
+            renderTools();
+        });
+    </script>
+</body>
+</html>
